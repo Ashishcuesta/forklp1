@@ -26,13 +26,13 @@
 
 // Default fallback configuration
 const getDefaultConfig = () => ({
-  primaryColor: "#00C2E0", 
+  primaryColor: "#00C2E0",
   secondaryColor: "#ffffff",
   accentColor: "#f87171",
   backgroundColor: "#EAF8F9",
   language: "en",
   footerText: "By subscribing to the service, you agree to the following terms and conditions: A standard subscription fee applies. To unsubscribe, send 'STOP' to 1234.",
-  
+
   countryCodes: [
     { code: "+971", country: "UAE", flag: "🇦🇪" },
     { code: "+966", country: "Saudi Arabia", flag: "🇸🇦" },
@@ -43,7 +43,7 @@ const getDefaultConfig = () => ({
     { code: "+20", country: "Egypt", flag: "🇪🇬" },
     { code: "+962", country: "Jordan", flag: "🇯🇴" },
   ],
-  
+
   translations: {
     title: "Your file is ready",
     subtitle: "Enter your phone number and confirm the PIN code",
@@ -51,12 +51,12 @@ const getDefaultConfig = () => ({
     buttonText: "CONTINUE",
     errorMessage: "Please insert your phone number"
   },
-  
+
   availableLanguages: [
     { code: "ar", label: "AR" },
     { code: "en", label: "EN" }
   ],
-  
+
   // API data
   landingPageId: null,
   campaignId: null,
@@ -64,13 +64,19 @@ const getDefaultConfig = () => ({
   publisherId: null,
 });
 
-// Get current domain from request headers
+// Get current domain dynamically
 const getCurrentDomain = (headers) => {
-  // Check for environment variable override first (useful for development)
+  // Check for environment variable override first (useful for development/testing)
   if (process.env.NEXT_PUBLIC_OVERRIDE_DOMAIN) {
     return process.env.NEXT_PUBLIC_OVERRIDE_DOMAIN;
   }
-  
+
+  // Client-side: Use window.location.hostname
+  if (typeof window !== 'undefined') {
+    return window.location.hostname;
+  }
+
+  // Server-side: Use request headers
   const host = headers?.get('host') || headers?.host;
   return host || 'oman.kidoz.xyz'; // Default fallback
 };
@@ -78,7 +84,7 @@ const getCurrentDomain = (headers) => {
 // Map API response to frontend config format
 const mapApiResponseToConfig = (apiData) => {
   const { landing_page, campaign } = apiData;
-  
+
   return {
     // Map landing page colors and settings
     primaryColor: landing_page?.default_bg_color || "#00C2E0",
@@ -87,7 +93,7 @@ const mapApiResponseToConfig = (apiData) => {
     backgroundColor: "#EAF8F9",
     language: landing_page?.default_language || "en",
     footerText: landing_page?.default_footer || "By subscribing to the service, you agree to the following terms and conditions.",
-    
+
     // Country codes (hardcoded for now, can be made dynamic later)
     countryCodes: [
       { code: "+971", country: "UAE", flag: "🇦🇪" },
@@ -99,7 +105,7 @@ const mapApiResponseToConfig = (apiData) => {
       { code: "+20", country: "Egypt", flag: "🇪🇬" },
       { code: "+962", country: "Jordan", flag: "🇯🇴" },
     ],
-    
+
     // Translations based on language
     translations: {
       title: "Your file is ready",
@@ -108,12 +114,12 @@ const mapApiResponseToConfig = (apiData) => {
       buttonText: landing_page?.default_submit_button_text || "CONTINUE",
       errorMessage: "Please insert your phone number"
     },
-    
+
     availableLanguages: [
       { code: "ar", label: "AR" },
       { code: "en", label: "EN" }
     ],
-    
+
     // Store API data for later use
     landingPageId: landing_page?.id,
     landingPageName: landing_page?.name,
@@ -129,12 +135,12 @@ export const getBackendConfig = async (headers = null) => {
   try {
     // Get the current domain
     const domain = getCurrentDomain(headers);
-    
+
     // Construct API URL
     const apiUrl = `https://kidoz.xyz/api/lp/resolve-lp-domain/?domain=${encodeURIComponent(domain)}`;
-    
+
     console.log(`Fetching config from: ${apiUrl}`);
-    
+
     // Make API request
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -143,34 +149,34 @@ export const getBackendConfig = async (headers = null) => {
       },
       cache: 'no-store', // Disable caching to always get fresh data
     });
-    
+
     if (!response.ok) {
       console.warn(`API request failed with status ${response.status}. Using default config.`);
       return getDefaultConfig();
     }
-    
+
     const apiData = await response.json();
-    
+
     // Check if landing page is active
     if (!apiData.landing_page?.is_active) {
       console.warn('Landing page is not active, using default config');
       return getDefaultConfig();
     }
-    
+
     // Map and return the configuration
     const config = mapApiResponseToConfig(apiData);
-    
+
     // Add the domain to the config for frontend use
     config.domain = domain;
-    
+
     console.log('Config loaded successfully:', config);
-    
+
     return config;
-    
+
   } catch (error) {
     console.error('Error fetching backend config:', error);
     console.log('Falling back to default configuration');
-    
+
     // Return default config on error
     return getDefaultConfig();
   }

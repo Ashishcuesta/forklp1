@@ -39,7 +39,7 @@ GET /api/config
     "buttonText": "CONTINUE",
     "errorMessage": "Please insert your phone number"
   },
-  
+  //minor changes
   "availableLanguages": [
     {
       "code": "ar",

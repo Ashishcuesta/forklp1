@@ -9,7 +9,7 @@ export default async function Home() {
 
     return (
         <main 
-            className="min-h-[120vh] relative flex flex-col items-center justify-center overflow-hidden"
+            className="relative overflow-hidden"
             style={{ backgroundColor: config.backgroundColor || '#EAF8F9' }}
             dir={config.language === 'ar' ? 'rtl' : 'ltr'}
         >
@@ -38,9 +38,13 @@ export default async function Home() {
                 ></div>
             </div>
 
-            <div className="z-10 w-full h-full sm:h-auto flex flex-col justify-center items-stretch sm:items-center px-0 sm:px-4">
+            {/* Content area - 100vh for centering */}
+            <div className="min-h-screen z-10 w-full flex flex-col justify-start sm:justify-center items-stretch sm:items-center px-0 sm:px-4">
                 <LoginForm config={config} />
             </div>
+            
+            {/* Extra scroll space for footer reveal */}
+            <div className="h-[20vh]"></div>
 
             <Footer text={config.footerText} language={config.language} availableLanguages={config.availableLanguages} />
         </main>
